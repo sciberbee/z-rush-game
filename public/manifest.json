@@ -1,0 +1,21 @@
+{
+  "name": "Z-Rush",
+  "short_name": "Z-Rush",
+  "description": "Zombie survival shooting defense game",
+  "theme_color": "#1a1a2e",
+  "background_color": "#1a1a2e",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "prefer_related_applications": false
+}
