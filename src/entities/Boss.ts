@@ -20,7 +20,7 @@ export class Boss extends Enemy {
 
     if (modelTemplate) {
       mesh = SkeletonUtils.clone(modelTemplate);
-      mesh.scale.set(1.0, 1.0, 1.0);
+      mesh.scale.set(0.2, 0.2, 0.2);
       // mesh.rotation.y = Math.PI; // Face forward
       
       mesh.traverse((child) => {

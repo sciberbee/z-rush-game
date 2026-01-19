@@ -146,6 +146,8 @@ export class WaveSystem implements System {
       damage: this.currentLevel.boss.damage,
       speed: this.currentLevel.boss.speed,
     });
+    
+    EventBus.emit('PLAY_SFX', { name: 'boss_spawn', volume: 1.0 });
   }
 
   public setLevel(level: LevelConfig): void {

@@ -94,7 +94,10 @@ export type GameEventType =
   | 'GATE_PASSED'
   | 'HERO_SKILL_USED'
   | 'GAME_STATE_CHANGED'
-  | 'PLAYER_DIED';
+  | 'PLAYER_DIED'
+  | 'PLAY_SFX'
+  | 'PLAY_BGM'
+  | 'STOP_BGM';
 
 export interface GameEvent {
   type: GameEventType;

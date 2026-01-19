@@ -29,9 +29,16 @@ export class Resources {
   private loaded: boolean = false;
   private manifest: ResourceManifest;
   private models: { [key: string]: THREE.Group } = {};
+  private audioBuffers: { [key: string]: AudioBuffer } = {};
 
   private constructor() {
-    this.manifest = defaultManifest;
+    this.manifest = {
+      ...defaultManifest,
+      audio: {
+        ...defaultManifest.audio,
+        boss_spawn: '/audio/boss_spawn.mp3',
+      },
+    };
   }
 
   public static getInstance(): Resources {
@@ -70,16 +77,27 @@ export class Resources {
       }
     });
 
-    // Simulate audio loading (as before)
-    const loadAudioPromises = audioKeys.map(async (_key) => {
-      // await this.loadAudio(key, this.manifest.audio[key]);
-      updateProgress();
-      return Promise.resolve();
+    // Load Audio
+    const audioLoader = new THREE.AudioLoader();
+    const loadAudioPromises = audioKeys.map(async (key) => {
+      const url = this.manifest.audio[key];
+      try {
+        const buffer = await audioLoader.loadAsync(url);
+        this.audioBuffers[key] = buffer;
+      } catch (error) {
+        console.warn(`Failed to load audio: ${key} at ${url}`, error);
+      } finally {
+        updateProgress();
+      }
     });
 
     await Promise.all([...loadModelPromises, ...loadAudioPromises]);
 
     this.loaded = true;
+  }
+
+  public getAudio(key: string): AudioBuffer | undefined {
+    return this.audioBuffers[key];
   }
 
   public getAudioPath(key: string): string | undefined {

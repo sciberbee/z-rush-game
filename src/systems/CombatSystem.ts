@@ -6,6 +6,7 @@ import { Bullet } from '../entities/Bullet';
 import { ObjectPool } from '../utils/ObjectPool';
 import { GameConfig } from '../config/GameConfig';
 import { distance2D } from '../utils/MathUtils';
+import { EventBus } from '../core/EventBus';
 
 export class CombatSystem implements System {
   private scene: THREE.Scene;
@@ -81,6 +82,7 @@ export class CombatSystem implements System {
       bullet.fire(from, to);
       this.scene.add(bullet.mesh);
       this.activeBullets.push(bullet);
+      EventBus.emit('PLAY_SFX', { name: 'shoot', volume: 0.3 });
     }
   }
 
@@ -157,8 +159,10 @@ export class CombatSystem implements System {
         if (dist < 0.5) {
           enemy.takeDamage(bullet.damage);
           bullet.die();
+          EventBus.emit('PLAY_SFX', { name: 'hit', volume: 0.2 });
 
           if (!enemy.active) {
+            EventBus.emit('PLAY_SFX', { name: 'explosion', volume: 0.4 });
             this.spawnSystem.removeEnemy(enemy);
           }
           break;

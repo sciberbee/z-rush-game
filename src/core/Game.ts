@@ -2,6 +2,7 @@ import { SceneManager } from './SceneManager';
 import { Resources } from './Resources';
 import { EventBus } from './EventBus';
 import { Input } from './Input';
+import { SoundManager } from './SoundManager';
 import type { GameState, System } from '../types';
 import { Player } from '../entities/Player';
 import { MovementSystem } from '../systems/MovementSystem';
@@ -13,6 +14,7 @@ import { WaveSystem } from '../systems/WaveSystem';
 export class Game {
   private sceneManager: SceneManager;
   private systems: System[] = [];
+  private soundManager: SoundManager | null = null;
   private state: GameState = 'LOADING';
   private lastTime: number = 0;
   private animationFrameId: number = 0;
@@ -40,6 +42,9 @@ export class Game {
     this.player = new Player(scene);
 
     // Initialize systems
+    // Initialize systems
+    this.soundManager = new SoundManager(this.sceneManager.camera); // Add SoundManager
+    
     const movementSystem = new MovementSystem(this.player, this.input);
     const spawnSystem = new SpawnSystem(scene, this.player);
     const collisionSystem = new CollisionSystem(this.player, spawnSystem);
@@ -51,9 +56,22 @@ export class Game {
     this.addSystem(collisionSystem);
     this.addSystem(combatSystem);
     this.addSystem(waveSystem);
-
-    // Listen for game events
-    EventBus.on('PLAYER_DIED', () => this.gameOver());
+    // SoundManager doesn't need to be in the update loop unless we want to do something per-frame
+    // But we need to keep a reference to dispose it.
+    
+    // Listen for events to trigger global sounds (Victory/GameOver)
+    EventBus.on('PLAYER_DIED', () => {
+        EventBus.emit('PLAY_SFX', { name: 'gameover' });
+        EventBus.emit('STOP_BGM');
+        this.gameOver();
+    });
+    
+    EventBus.on('WAVE_COMPLETED', (data: any) => {
+        if (data.bossDefeated) {
+            EventBus.emit('PLAY_SFX', { name: 'victory' });
+            EventBus.emit('STOP_BGM');
+        }
+    });
 
     this.setState('MENU');
     console.log('Game initialized');
@@ -67,6 +85,8 @@ export class Game {
     if (this.state === 'PLAYING') return;
 
     this.setState('PLAYING');
+    EventBus.emit('PLAY_BGM', { name: 'bgm', volume: 0.3 });
+    
     this.lastTime = performance.now();
     this.loop(this.lastTime);
   }
