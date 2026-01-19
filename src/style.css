@@ -295,15 +295,6 @@ html, body {
   margin: 0 3px;
 }
 
-/* Joystick Zone */
-.joystick-zone {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50%;
-  height: 40%;
-}
-
 /* Skill Buttons */
 .skill-buttons {
   position: absolute;

@@ -1,6 +1,10 @@
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 export interface ResourceManifest {
   audio: { [key: string]: string };
   textures: { [key: string]: string };
+  models: { [key: string]: string };
 }
 
 const defaultManifest: ResourceManifest = {
@@ -14,12 +18,16 @@ const defaultManifest: ResourceManifest = {
     gameover: '/audio/gameover.mp3',
   },
   textures: {},
+  models: {
+    zombie: '/models/zombie.glb', // Default placeholder path
+  },
 };
 
 export class Resources {
   private static instance: Resources;
   private loaded: boolean = false;
   private manifest: ResourceManifest;
+  private models: { [key: string]: THREE.Group } = {};
 
   private constructor() {
     this.manifest = defaultManifest;
@@ -37,26 +45,48 @@ export class Resources {
   ): Promise<void> {
     if (this.loaded) return;
 
-    // For now, we'll skip actual loading since we don't have audio files yet
-    // In production, this would load all audio files
-
-    const totalItems = Object.keys(this.manifest.audio).length +
-      Object.keys(this.manifest.textures).length;
-
+    const audioKeys = Object.keys(this.manifest.audio);
+    const modelKeys = Object.keys(this.manifest.models);
+    const totalItems = audioKeys.length + modelKeys.length;
     let loadedItems = 0;
 
-    // Simulate loading
-    for (const _key of Object.keys(this.manifest.audio)) {
+    const updateProgress = () => {
       loadedItems++;
       onProgress?.(loadedItems / totalItems);
+    };
+
+    // Load Models
+    const gltfLoader = new GLTFLoader();
+    const loadModelPromises = modelKeys.map(async (key) => {
+      const url = this.manifest.models[key];
+      try {
+        const gltf = await gltfLoader.loadAsync(url);
+        this.models[key] = gltf.scene;
+      } catch (error) {
+        console.warn(`Failed to load model: ${key} at ${url}`, error);
+      } finally {
+        updateProgress();
+      }
+    });
+
+    // Simulate audio loading (as before)
+    const loadAudioPromises = audioKeys.map(async (_key) => {
       // await this.loadAudio(key, this.manifest.audio[key]);
-    }
+      updateProgress();
+      return Promise.resolve();
+    });
+
+    await Promise.all([...loadModelPromises, ...loadAudioPromises]);
 
     this.loaded = true;
   }
 
   public getAudioPath(key: string): string | undefined {
     return this.manifest.audio[key];
+  }
+
+  public getModel(key: string): THREE.Group | undefined {
+    return this.models[key];
   }
 
   public isLoaded(): boolean {

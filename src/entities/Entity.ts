@@ -2,13 +2,13 @@ import * as THREE from 'three';
 import type { Poolable } from '../types';
 
 export abstract class Entity implements Poolable {
-  public mesh: THREE.Mesh | THREE.Group;
+  public mesh: THREE.Object3D;
   public active: boolean = true;
   public position: THREE.Vector3;
   public health: number = 100;
   public maxHealth: number = 100;
 
-  constructor(mesh: THREE.Mesh | THREE.Group) {
+  constructor(mesh: THREE.Object3D) {
     this.mesh = mesh;
     this.position = mesh.position;
   }
@@ -40,11 +40,15 @@ export abstract class Entity implements Poolable {
   public abstract update(deltaTime: number): void;
 
   public dispose(): void {
-    if (this.mesh instanceof THREE.Mesh) {
-      this.mesh.geometry?.dispose();
-      if (this.mesh.material instanceof THREE.Material) {
-        this.mesh.material.dispose();
+    this.mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry?.dispose();
+        if (child.material instanceof THREE.Material) {
+          child.material.dispose();
+        } else if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        }
       }
-    }
+    });
   }
 }

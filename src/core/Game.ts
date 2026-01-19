@@ -1,4 +1,5 @@
 import { SceneManager } from './SceneManager';
+import { Resources } from './Resources';
 import { EventBus } from './EventBus';
 import { Input } from './Input';
 import type { GameState, System } from '../types';
@@ -25,6 +26,11 @@ export class Game {
   }
 
   public async init(): Promise<void> {
+    // Load resources
+    await Resources.getInstance().load((progress: number) => {
+      console.log(`Loading resources: ${(progress * 100).toFixed(0)}%`);
+    });
+
     const scene = this.sceneManager.scene;
 
     // Initialize input

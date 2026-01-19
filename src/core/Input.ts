@@ -1,14 +1,15 @@
-import nipplejs from 'nipplejs';
-import { GameConfig } from '../config/GameConfig';
-
 export type InputCallback = (horizontalValue: number) => void;
 
 export class Input {
-  private joystick: nipplejs.JoystickManager | null = null;
   private onHorizontalChange: InputCallback | null = null;
   private currentHorizontalValue: number = 0;
   private keyboardState: { left: boolean; right: boolean } = { left: false, right: false };
   private isTouchDevice: boolean;
+
+  // Touch handling
+  private touchStartX: number = 0;
+  private isTouching: boolean = false;
+  private readonly TOUCH_SENSITIVITY = 100; // Pixels to reach full speed
 
   constructor() {
     this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -20,33 +21,51 @@ export class Input {
   }
 
   private setupTouchControls(): void {
-    // Create joystick zone
-    const joystickZone = document.createElement('div');
-    joystickZone.className = 'joystick-zone';
-    document.getElementById('ui-container')?.appendChild(joystickZone);
+    const container = document.getElementById('game-container') || document.body;
 
-    this.joystick = nipplejs.create({
-      zone: joystickZone,
-      mode: 'semi',
-      catchDistance: 150,
-      color: 'rgba(255, 255, 255, 0.5)',
-      size: GameConfig.JOYSTICK_SIZE,
-      position: { left: '50%', top: '50%' },
-      dynamicPage: true,
-    });
+    container.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+    container.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+    container.addEventListener('touchend', this.handleTouchEnd.bind(this));
+    container.addEventListener('touchcancel', this.handleTouchEnd.bind(this));
+  }
 
-    this.joystick.on('move', (_evt, data) => {
-      if (data.vector) {
-        // Only use horizontal component
-        this.currentHorizontalValue = data.vector.x;
-        this.notifyChange();
-      }
-    });
+  private handleTouchStart(evt: TouchEvent): void {
+    // Prevent default to avoid scrolling/zooming while playing
+    if (evt.cancelable) evt.preventDefault();
+    
+    this.isTouching = true;
+    this.touchStartX = evt.touches[0].clientX;
+  }
 
-    this.joystick.on('end', () => {
-      this.currentHorizontalValue = 0;
-      this.notifyChange();
-    });
+  private handleTouchMove(evt: TouchEvent): void {
+    if (!this.isTouching) return;
+    if (evt.cancelable) evt.preventDefault();
+
+    const currentX = evt.touches[0].clientX;
+    const deltaX = currentX - this.touchStartX;
+
+    // Calculate normalized value [-1, 1]
+    let normalized = deltaX / this.TOUCH_SENSITIVITY;
+    
+    // Clamp values
+    if (normalized > 1) normalized = 1;
+    if (normalized < -1) normalized = -1;
+
+    // Apply deadzone if needed, or just set it
+    this.currentHorizontalValue = normalized;
+    this.notifyChange();
+    
+    // Optional: Reset start X to dragging feels like "pulling" the stick, 
+    // OR keep it absolute relative to start point. 
+    // Current implementation: Relative to start point (joystick-like).
+    // To make it "follow finger" style, we might want to reset touchStartX, 
+    // but for "control speed", typically joystick-style (hold to move) is better.
+  }
+
+  private handleTouchEnd(_evt: TouchEvent): void {
+    this.isTouching = false;
+    this.currentHorizontalValue = 0;
+    this.notifyChange();
   }
 
   private setupKeyboardControls(): void {
@@ -87,8 +106,8 @@ export class Input {
   }
 
   private updateKeyboardInput(): void {
-    // Don't override touch input
-    if (this.isTouchDevice && this.joystick) {
+    // Don't override touch input if user is actively touching
+    if (this.isTouching) {
       return;
     }
 
@@ -115,9 +134,12 @@ export class Input {
   }
 
   public dispose(): void {
-    if (this.joystick) {
-      this.joystick.destroy();
-    }
+    const container = document.getElementById('game-container') || document.body;
+    container.removeEventListener('touchstart', this.handleTouchStart.bind(this));
+    container.removeEventListener('touchmove', this.handleTouchMove.bind(this));
+    container.removeEventListener('touchend', this.handleTouchEnd.bind(this));
+    container.removeEventListener('touchcancel', this.handleTouchEnd.bind(this));
+
     window.removeEventListener('keydown', this.handleKeyDown.bind(this));
     window.removeEventListener('keyup', this.handleKeyUp.bind(this));
   }

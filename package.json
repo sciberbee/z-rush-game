@@ -20,7 +20,6 @@
     "@types/howler": "^2.2.12",
     "@types/three": "^0.182.0",
     "howler": "^2.2.4",
-    "nipplejs": "^0.10.2",
     "three": "^0.182.0"
   }
 }

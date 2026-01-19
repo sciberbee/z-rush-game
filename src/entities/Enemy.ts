@@ -8,7 +8,7 @@ export class Enemy extends Entity {
   public speed: number = GameConfig.ZOMBIE_SPEED;
   public targetPosition: THREE.Vector3 | null = null;
 
-  constructor(mesh?: THREE.Mesh) {
+  constructor(mesh?: THREE.Object3D) {
     if (!mesh) {
       const geometry = new THREE.BoxGeometry(0.5, 0.8, 0.5);
       const material = new THREE.MeshLambertMaterial({
