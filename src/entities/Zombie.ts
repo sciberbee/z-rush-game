@@ -22,7 +22,7 @@ export class Zombie extends Enemy {
       // Initial scale and rotation adjustments for the model
       // These might need tuning based on the specific model used
       mesh.scale.set(2.0, 2.0, 2.0); 
-      // mesh.rotation.y = Math.PI; // Face forward if needed
+      mesh.rotation.y = Math.PI; // Face forward
       
       // Enable shadows for all meshes in the model
       mesh.traverse((child) => {

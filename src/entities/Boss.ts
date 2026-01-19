@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { Enemy } from './Enemy';
+import { Resources } from '../core/Resources';
 import { GameConfig } from '../config/GameConfig';
 import type { EnemyConfig } from '../types';
 import { EventBus } from '../core/EventBus';
@@ -11,13 +13,32 @@ export class Boss extends Enemy {
 
   constructor(config: EnemyConfig) {
     // Create boss mesh (larger than regular enemies)
-    const geometry = new THREE.BoxGeometry(2, 3, 2);
-    const material = new THREE.MeshLambertMaterial({
-      color: GameConfig.COLOR_BOSS,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+    // Try to load model
+    const resources = Resources.getInstance();
+    const modelTemplate = resources.getModel('boss');
+    let mesh: THREE.Object3D;
+
+    if (modelTemplate) {
+      mesh = SkeletonUtils.clone(modelTemplate);
+      mesh.scale.set(4.0, 4.0, 4.0);
+      // mesh.rotation.y = Math.PI; // Face forward
+      
+      mesh.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    } else {
+      const geometry = new THREE.BoxGeometry(2, 3, 2);
+      const material = new THREE.MeshLambertMaterial({
+        color: GameConfig.COLOR_BOSS,
+      });
+      mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+    }
+
     mesh.position.y = 1.5;
 
     super(mesh);

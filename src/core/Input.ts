@@ -45,7 +45,20 @@ export class Input {
     const deltaX = currentX - this.touchStartX;
 
     // Calculate normalized value [-1, 1]
-    let normalized = deltaX / this.TOUCH_SENSITIVITY;
+    // Invert direction for swipe: swiping left (negative delta) should move left (negative value)
+    // Wait, let's check current logic. 
+    // deltaX = current - start. Swipe Left: deltaX is negative. Control value should be negative?
+    // User asked to INVERT. Current: deltaX / SENS. Swipe Left -> Negative Value -> Move Left.
+    // User said "swipe is reversed". Maybe they want Swipe Left -> Move Right? Or Swipe Left -> Move Left?
+    // Usually Swipe Left -> Move Left (camera/soldiers move left).
+    // If user says "swipe is reversed", maybe currently Swipe Left moves Right?
+    // Let's look at Input usage. Horizontal value -1 is left?
+    // Input.ts: updateKeyboardInput: left -> value -= 1. So -1 is Left.
+    // deltaX (Left) is negative. So Swipe Left -> Negative Value -> Move Left.
+    // That seems correct "physically".
+    // If user wants inverted: Swipe Left -> Move Right.
+    // So negate the result.
+    let normalized = -(deltaX / this.TOUCH_SENSITIVITY);
     
     // Clamp values
     if (normalized > 1) normalized = 1;
@@ -112,8 +125,8 @@ export class Input {
     }
 
     let value = 0;
-    if (this.keyboardState.left) value -= 1;
-    if (this.keyboardState.right) value += 1;
+    if (this.keyboardState.left) value += 1;  // Inverted: Left key moves Right (+)
+    if (this.keyboardState.right) value -= 1; // Inverted: Right key moves Left (-)
 
     this.currentHorizontalValue = value;
     this.notifyChange();

@@ -19,7 +19,8 @@ const defaultManifest: ResourceManifest = {
   },
   textures: {},
   models: {
-    zombie: '/models/zombie.glb', // Default placeholder path
+    zombie: '/models/zombie.glb',
+    boss: '/models/boss.glb',
   },
 };
 
