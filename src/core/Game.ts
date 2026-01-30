@@ -10,6 +10,8 @@ import { SpawnSystem } from '../systems/SpawnSystem';
 import { CollisionSystem } from '../systems/CollisionSystem';
 import { CombatSystem } from '../systems/CombatSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+import { syncService } from '../services/SyncService';
+import { authService } from '../services/AuthService';
 
 export class Game {
   private sceneManager: SceneManager;
@@ -70,6 +72,8 @@ export class Game {
         if (data.bossDefeated) {
             EventBus.emit('PLAY_SFX', { name: 'victory' });
             EventBus.emit('STOP_BGM');
+            // Save score on victory if authenticated
+            this.saveGameResult(true);
         }
     });
 
@@ -116,6 +120,38 @@ export class Game {
   public victory(): void {
     this.setState('VICTORY');
     cancelAnimationFrame(this.animationFrameId);
+  }
+
+  private async saveGameResult(completed: boolean): Promise<void> {
+    if (!this.player) return;
+
+    const soldierCount = this.player.getSoldierCount();
+    const score = soldierCount * 100; // Simple score calculation
+    const levelIndex = 0; // Currently single level
+
+    // Emit score for UI display
+    EventBus.emit('GAME_SCORE', { score, soldierCount, completed });
+
+    if (!authService.isAuthenticated()) {
+      console.log('Not authenticated - score not saved to server');
+      return;
+    }
+
+    try {
+      // Submit score to leaderboard
+      const result = await syncService.submitScore(levelIndex, score, soldierCount);
+      if (result) {
+        EventBus.emit('SCORE_SUBMITTED', { rank: result.rank, score });
+      }
+
+      // Save progress
+      await syncService.saveProgress(levelIndex, {
+        completed,
+        stars: completed ? Math.min(3, Math.floor(soldierCount / 10)) : 0,
+      });
+    } catch (error) {
+      console.error('Failed to save game result:', error);
+    }
   }
 
   public restart(): void {
@@ -171,6 +207,7 @@ export class Game {
   public dispose(): void {
     cancelAnimationFrame(this.animationFrameId);
     this.systems.forEach(system => system.dispose());
+    this.soundManager?.dispose();
     this.sceneManager.dispose();
     EventBus.clear();
   }

@@ -15,7 +15,7 @@ const defaultManifest: ResourceManifest = {
     pickup: '/audio/pickup.mp3',
     bgm: '/audio/bgm.mp3',
     victory: '/audio/victory.mp3',
-    gameover: '/audio/gameover.mp3',
+    gameover: '/audio/gameover.wav',
   },
   textures: {},
   models: {
@@ -36,7 +36,7 @@ export class Resources {
       ...defaultManifest,
       audio: {
         ...defaultManifest.audio,
-        boss_spawn: '/audio/boss_spawn.mp3',
+        boss_spawn: '/audio/boss_spawn.wav',
       },
     };
   }

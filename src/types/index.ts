@@ -97,7 +97,9 @@ export type GameEventType =
   | 'PLAYER_DIED'
   | 'PLAY_SFX'
   | 'PLAY_BGM'
-  | 'STOP_BGM';
+  | 'STOP_BGM'
+  | 'GAME_SCORE'
+  | 'SCORE_SUBMITTED';
 
 export interface GameEvent {
   type: GameEventType;
